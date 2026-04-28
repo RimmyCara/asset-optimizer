@@ -9,12 +9,15 @@ counter = itertools.count()
 app = Flask(__name__,)
 
 # Database Connection
-db = mysql.connector.connect(
-    host=os.getenv("DB_HOST"),
-    user=os.getenv("DB_USER"),
-    password=os.getenv("DB_PASSWORD"),
-    database=os.getenv("DB_NAME")
-)
+def get_db_connection():
+    return mysql.connector.connect(
+        host=os.getenv("DB_HOST"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        database=os.getenv("DB_NAME")
+        port = 3306
+    )
+    
 asset_queue = []
 current_asset = None
 
@@ -51,14 +54,21 @@ def process_next_asset():
     else:
         return None
 
-cursor = db.cursor(dictionary=True)
+cursor = get_db_connection().cursor(dictionary=True)
 
 
 @app.route("/")
 def home():
-    cursor.execute("SELECT * FROM assets WHERE completed = FALSE ORDER BY priority ASC")
-    assets = cursor.fetchall()
-    return render_template("index.html", assets=assets)
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT 1")  # simple test query
+    result = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    return f"MySQL Connected Successfully: {result}"
 
 
 @app.route("/assets", methods=["GET"])
@@ -92,12 +102,17 @@ def add_asset():
     
     priority = calculate_priority(status)
 
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
     sql = "INSERT INTO assets (name, priority, status) VALUES (%s, %s, %s)"
     values = (name, priority, status)
     cursor.execute(sql, values)
-    db.commit()
+    conn.commit()
     
     asset_id = cursor.lastrowid
+
+    cursor.close()
+    conn.close()
 
     process_asset(name, status, asset_id)
 
@@ -121,13 +136,15 @@ def get_next_asset():
 def complete_asset(id):
     global current_asset
 
-    cursor = db.cursor()
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
     
     query = "UPDATE assets SET completed = TRUE WHERE id = %s"
     cursor.execute(query, (id,))
     
-    db.commit()
+    conn.commit()
     cursor.close()
+    conn.close()
 
     # Reset current asset if it was the same
     if current_asset and current_asset.get('id') == id:
