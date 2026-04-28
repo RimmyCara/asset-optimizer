@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VGM Asset Optimizer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>">
+    <style>
+        :root {
+            --bg: #f1f5f9;
+            --card: #ffffff;
+            --text: #1e293b;
+            --muted: #6b7280;
+            --border: #e2e8f0;
+            --primary: #0ea5e9;
+            --primary-dark: #0369a1;
+            --success: #10b981;
+            --warning: #f97316;
+            --danger: #ef4444;
+            --radius: 14px;
+            --shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1120px;
+            margin: 24px auto;
+            padding: 0 16px 20px;
+        }
+
+        .topbar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .topbar h1 {
+            margin: 0;
+            font-size: 2.2rem;
+            line-height: 1.2;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+        }
+
+        .topbar p {
+            margin: 6px 0 0;
+            color: var(--muted);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 20px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(15, 23, 42, 0.1);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 1.25rem;
+            color: #0f172a;
+        }
+
+        #current-assets {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 10px;
+        }
+
+        #current-assets li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+        }
+
+        #current-assets li:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        #current-assets li::before {
+            content: counter(asset-counter);
+            counter-increment: asset-counter;
+            position: absolute;
+            left: -12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--primary);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        #current-assets {
+            counter-reset: asset-counter;
+        }
+
+        .status-pill {
+            padding: 4px 9px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .status-pill:hover {
+            transform: scale(1.05);
+        }
+
+        .status-critical { background: #dc2626; }
+        .status-high { background: #ea580c; }
+        .status-standard { background: #0ea5e9; }
+        .status-low { background: #22c55e; }
+        .status-complete { background: #64748b; }
+
+        form {
+            display: grid;
+            gap: 12px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        input, select {
+            width: 100%;
+            height: 40px;
+            padding: 0 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.95rem;
+        }
+
+        button {
+            border: none;
+            border-radius: 10px;
+            height: 42px;
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+            background: var(--primary);
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        button:hover:not(:disabled) {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        #next-asset-display {
+            margin-top: 12px;
+            padding: 14px;
+            border-radius: 10px;
+            border: 1px solid #dbeafe;
+            background: #eff6ff;
+            min-height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            transition: background 0.2s ease, border 0.2s ease;
+        }
+
+        .current-asset {
+            background: #dcfce7;
+            border: 1px solid #22c55e;
+            color: #166534;
+        }
+
+        .current-asset span {
+            color: #166534;
+        }
+
+        #next-asset-warning {
+            margin-top: 8px;
+            color: var(--danger);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        @media (max-width: 900px) {
+            .grid { grid-template-columns: 1fr; }
+            #next-asset-display { flex-direction: column; align-items: flex-start; }
+        }
+
+        footer {
+            text-align: center;
+            margin: 24px 0;
+            color: var(--muted);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="topbar">
+            <div>
+                <h1>VGM Asset Optimizer</h1>
+                <p>Track and process assets with priority queue behavior. Next asset appears only after completion.</p>
+            </div>
+        </div>
+
+        <div class="grid">
+            <section class="card">
+                <h2>Current Assets</h2>
+                <ul id="current-assets">
+                    {% for asset in assets %}
+                        <li id="asset-{{ asset.id }}">
+                            <span>{{ asset.name }} (P: {{ asset.priority }})</span>
+                            <span class="status-pill status-{{ asset.status | lower }}">{{ asset.status }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </section>
+
+            <section class="card">
+                <h2>Add New Asset</h2>
+                <form id="add-asset-form">
+                    <div>
+                        <label for="asset-name">Asset name</label>
+                        <input id="asset-name" type="text" required />
+                    </div>
+                    <div>
+                        <label for="asset-status">Status</label>
+                        <select id="asset-status" required>
+                            <option value="critical">Critical</option>
+                            <option value="high">High</option>
+                            <option value="standard">Standard</option>
+                            <option value="low">Low</option>
+                            <option value="complete">Complete</option>
+                        </select>
+                    </div>
+                    <button type="submit">Add Asset</button>
+                </form>
+            </section>
+        </div>
+
+        <section class="card" style="margin-top: 18px;">
+            <h2>Next Asset in Queue</h2>
+            <button id="next-asset-btn">Get Next Asset</button>
+            <div id="next-asset-display" data-asset-id=""></div>
+            <div id="next-asset-warning"></div>
+        </section>
+
+        <section class="card" style="margin-top: 18px;">
+            <h2>Last 5 Completed Assets</h2>
+            <ul id="completed-assets" style="list-style:none; margin:0; padding:0;"></ul>
+        </section>
+    </div>
+
+    <footer>
+        Made by Rimmy
+    </footer>
+
+    <script>
+        const nextBtn = document.getElementById('next-asset-btn');
+        const nextDisplay = document.getElementById('next-asset-display');
+        const nextWarning = document.getElementById('next-asset-warning');
+
+        const state = {
+            currentAssetId: '',
+        };
+
+        function setWarning(msg) {
+            nextWarning.textContent = msg;
+        }
+
+        function clearWarning() {
+            nextWarning.textContent = '';
+        }
+
+        function setNextDisplay(text, id) {
+            nextDisplay.innerHTML = text;
+            state.currentAssetId = id;
+            nextDisplay.dataset.assetId = id || '';
+        }
+
+        async function completeCurrentAsset(id) {
+            try {
+                const response = await fetch(`/completeAsset/${id}`, { method: 'PUT' });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    setWarning(data.message || 'Unable to complete asset.');
+                    return;
+                }
+
+                const li = document.getElementById(`asset-${id}`);
+                if (li) li.remove();
+
+                setNextDisplay('Asset completed. Click Get Next Asset for the next item.', '');
+                nextDisplay.classList.remove('current-asset');
+                nextBtn.disabled = false;
+                clearWarning();
+
+                // refresh completed history
+                await loadCompletedAssets();
+            } catch (error) {
+                console.error(error);
+                setWarning('Network error while completing asset.');
+            }
+        }
+
+        async function loadCompletedAssets() {
+            try {
+                const response = await fetch('/completed_assets');
+                if (!response.ok) {
+                    setWarning('Failed to load completed assets');
+                    return;
+                }
+
+                const assets = await response.json();
+                const list = document.getElementById('completed-assets');
+                list.innerHTML = '';
+
+                if (assets.length === 0) {
+                    list.innerHTML = '<li>No completed assets yet.</li>';
+                    return;
+                }
+
+                assets.forEach(asset => {
+                    const item = document.createElement('li');
+                    item.style.padding = '8px 10px';
+                    item.style.borderBottom = '1px solid #e2e8f0';
+                    item.style.fontSize = '0.9rem';
+                    item.style.opacity = '0';
+                    item.style.transform = 'translateX(-10px)';
+                    item.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                    item.innerHTML = `#${asset.id} ${asset.name} (${asset.status})`;
+                    list.appendChild(item);
+
+                    // Animate in
+                    setTimeout(() => {
+                        item.style.opacity = '1';
+                        item.style.transform = 'translateX(0)';
+                    }, 50 * assets.indexOf(asset));
+                });
+            } catch (error) {
+                console.error(error);
+                setWarning('Unable to load completed assets.');
+            }
+        }
+
+        async function loadNextAsset() {
+            if (state.currentAssetId) {
+                setWarning('Complete the current item before fetching a new one.');
+                return;
+            }
+
+            const response = await fetch('/next_asset');
+            const data = await response.json();
+
+            if (data.message) {
+                if (data.asset) {
+                    setNextDisplay(`Current: ${data.asset.name} - Status: ${data.asset.status}, Priority: ${data.asset.priority}`, data.asset.id);
+                } else {
+                    setNextDisplay(data.message, '');
+                }
+                return;
+            }
+
+            const content = document.createElement('span');
+            content.textContent = `Next: ${data.name} - Status: ${data.status}, Priority: ${data.priority}`;
+
+            const button = document.createElement('button');
+            button.textContent = 'Complete';
+            button.style.marginLeft = '12px';
+            button.addEventListener('click', () => completeCurrentAsset(data.id));
+
+            nextDisplay.innerHTML = '';
+            nextDisplay.appendChild(content);
+            nextDisplay.appendChild(button);
+            nextDisplay.classList.add('current-asset');
+
+            state.currentAssetId = data.id;
+            nextBtn.disabled = true;
+
+            const li = document.getElementById(`asset-${data.id}`);
+            if (li) li.remove();
+            clearWarning();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const addForm = document.getElementById('add-asset-form');
+            const assetList = document.getElementById('current-assets');
+
+            addForm.addEventListener('submit', async event => {
+                event.preventDefault();
+
+                const name = document.getElementById('asset-name').value.trim();
+                const status = document.getElementById('asset-status').value;
+
+                if (!name) {
+                    setWarning('Asset name cannot be empty.');
+                    return;
+                }
+
+                const response = await fetch('/add_asset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, status })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    setWarning(data.error || 'Failed to add asset');
+                    return;
+                }
+
+                const item = document.createElement('li');
+                item.id = `asset-${data.id}`;
+                item.innerHTML = `${name} (P: ${data.priority}) <span class='status-pill status-${status.toLowerCase()}'>${status}</span>`;
+                assetList.appendChild(item);
+
+                document.getElementById('asset-name').value = '';
+                document.getElementById('asset-status').value = 'critical';
+                setWarning('New asset added.');
+            });
+
+            nextBtn.addEventListener('click', loadNextAsset);
+
+            // load last 5 completed assets on page load
+            loadCompletedAssets();
+        });
+    </script>
+</body>
+</html>
